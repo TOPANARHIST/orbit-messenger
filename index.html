@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbit</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-dark: #0e1621;
+    --bg-sidebar: #17212b;
+    --bg-input: #242f3d;
+    --bg-hover: #202b36;
+    --accent: #2AABEE;
+    --accent-hover: #229ED9;
+    --text: #ffffff;
+    --text-dim: #7d8b99;
+    --border: #101921;
+    --bubble-own: #2b5278;
+    --bubble-other: #182533;
+    --gold: #ffc107;
+  }
+
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #000;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  /* ===== ЭКРАН ВХОДА ===== */
+  #auth {
+    background: var(--bg-sidebar);
+    padding: 45px 35px;
+    border-radius: 16px;
+    width: 380px;
+    text-align: center;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.7);
+  }
+  #auth .logo {
+    width: 90px;
+    height: 90px;
+    background: linear-gradient(135deg, #2AABEE, #229ED9);
+    border-radius: 50%;
+    margin: 0 auto 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    box-shadow: 0 10px 30px rgba(42,171,238,0.35);
+  }
+  #auth h1 { font-size: 26px; margin-bottom: 8px; letter-spacing: 0.5px; }
+  #auth .subtitle { font-size: 14px; color: var(--text-dim); margin-bottom: 25px; }
+
+  #tabs {
+    display: flex;
+    background: var(--bg-input);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+  #tabs button {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: 0.2s;
+  }
+  #tabs button.active { background: var(--accent); color: #fff; }
+
+  .field {
+    width: 100%;
+    padding: 14px 18px;
+    background: var(--bg-input);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 12px;
+    outline: none;
+    transition: 0.2s;
+  }
+  .field:focus { border-color: var(--accent); }
+  .field::placeholder { color: var(--text-dim); }
+
+  #submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-top: 8px;
+  }
+  #submit-btn:hover { background: var(--accent-hover); }
+  #error-msg { color: #ff6b6b; font-size: 13px; margin-top: 12px; min-height: 18px; }
+  #name-field { display: none; }
+
+  /* ===== ОСНОВНОЙ APP ===== */
+  #app {
+    display: none;
+    width: 1000px;
+    height: 95vh;
+    max-height: 850px;
+    background: var(--bg-sidebar);
+    border-radius: 12px;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.7);
+    overflow: hidden;
+    grid-template-columns: 320px 1fr;
+  }
+
+  /* ===== САЙДБАР ===== */
+  #sidebar {
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  #sidebar-header {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  #sidebar-header .ico {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #2AABEE, #229ED9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  #sidebar-header .title { font-size: 17px; font-weight: 600; }
+  #sidebar-header .sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+  /* Вкладки сайдбара */
+  #nav-tabs {
+    display: flex;
+    padding: 10px 12px;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  #nav-tabs button {
+    flex: 1;
+    padding: 8px 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: 0.2s;
+    font-weight: 500;
+  }
+  #nav-tabs button:hover { background: var(--bg-hover); }
+  #nav-tabs button.active { background: var(--accent); color: #fff; }
+
+  #search-box { padding: 10px 16px 6px; }
+  #search-box input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-input);
+    border: none;
+    border-radius: 20px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+  }
+  #search-box input::placeholder { color: var(--text-dim); }
+
+  #users-title {
+    padding: 10px 20px 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 600;
+  }
+
+  #users { flex: 1; overflow-y: auto; }
+  #users::-webkit-scrollbar { width: 5px; }
+  #users::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: 0.12s;
+    border-radius: 10px;
+    margin: 2px 8px;
+  }
+  .user:hover { background: var(--bg-hover); }
+  .user.active { background: var(--accent); }
+  .user .avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #2AABEE, #229ED9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    font-weight: 600;
+    flex-shrink: 0;
+    color: #fff;
+  }
+  .user .info { flex: 1; min-width: 0; }
+  .user .info .name { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user .info .last { font-size: 13px; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user.active .info .last { color: rgba(255,255,255,0.85); }
+
+  .empty { padding: 30px 20px; color: var(--text-dim); font-size: 13px; text-align: center; }
+
+  /* ===== ОСНОВНАЯ ОБЛАСТЬ ===== */
+  #main {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-dark);
+    position: relative;
+  }
+  #main::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(42,171,238,0.04), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(34,158,217,0.04), transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .view { display: none; flex-direction: column; flex: 1; position: relative; z-index: 1; overflow: hidden; }
+  .view.active { display: flex; }
+
+  #chat-header {
+    background: var(--bg-sidebar);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    min-height: 60px;
+  }
+  #chat-header .avatar {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #2AABEE, #229ED9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  #chat-header .info { flex: 1; }
+  #chat-header .info h2 { font-size: 15px; font-weight: 600; }
+  #chat-header .info .status { font-size: 12px; color: var(--accent); }
+
+  #logout-btn {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s;
+  }
+  #logout-btn:hover { color: #ff6b6b; border-color: #ff6b6b; }
+
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  #messages::-webkit-scrollbar { width: 6px; }
+  #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+  .msg {
+    margin-bottom: 6px;
+    max-width: 65%;
+    padding: 8px 12px 6px;
+    border-radius: 14px;
+    word-wrap: break-word;
+    font-size: 14px;
+    line-height: 1.4;
+    position: relative;
+    animation: fadeIn 0.18s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg.own { background: var(--bubble-own); align-self: flex-end; border-bottom-right-radius: 4px; }
+  .msg.other { background: var(--bubble-other); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .msg .text { padding-right: 42px; }
+  .msg .time {
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.55);
+    position: absolute;
+    right: 10px;
+    bottom: 6px;
+  }
+  .msg.own .time::after { content: ' ✓✓'; color: var(--accent); font-size: 11px; }
+
+  #typing { font-size: 12px; color: var(--accent); padding: 0 24px 6px; height: 18px; }
+
+  #placeholder {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    text-align: center;
+    flex-direction: column;
+    gap: 14px;
+  }
+  #placeholder .big {
+    width: 90px;
+    height: 90px;
+    background: var(--bg-sidebar);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    opacity: 0.6;
+  }
+
+  #input-area {
+    display: flex;
+    padding: 12px 20px 16px;
+    gap: 10px;
+    align-items: center;
+  }
+  #input-area input {
+    flex: 1;
+    padding: 12px 18px;
+    background: var(--bg-input);
+    border: none;
+    border-radius: 22px;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+  }
+  #input-area input::placeholder { color: var(--text-dim); }
+  #input-area button {
+    width: 44px;
+    height: 44px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    flex-shrink: 0;
+  }
+  #input-area button:hover { background: var(--accent-hover); }
+
+  /* ===== ЗВЁЗДЫ (календарь) ===== */
+  #stars-view, #shop-view, #admin-view {
+    padding: 24px;
+    overflow-y: auto;
+  }
+
+  .view-title { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .view-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 20px; }
+
+  #stars-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+    color: #000;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 20px;
+  }
+  #streak-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 87, 34, 0.15);
+    color: #ff5722;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 20px;
+    margin-left: 10px;
+  }
+
+  #calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .day {
+    aspect-ratio: 1;
+    background: var(--bg-sidebar);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--text-dim);
+    transition: 0.2s;
+    position: relative;
+  }
+  .day.today {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 0 20px rgba(42,171,238,0.5);
+    cursor: pointer;
+  }
+  .day.today:hover { background: var(--accent-hover); transform: scale(1.05); }
+  .day.claimed { background: rgba(255, 193, 7, 0.15); color: var(--gold); }
+  .day.future { opacity: 0.3; }
+
+  #reward-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  #reward-btn:hover { transform: scale(1.02); }
+  #reward-btn:disabled {
+    background: var(--bg-input);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ===== МАГАЗИН ===== */
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .shop-item {
+    background: var(--bg-sidebar);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: 0.2s;
+  }
+  .shop-item:hover { background: var(--bg-hover); }
+  .shop-item .wp-preview {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    flex-shrink: 0;
+  }
+  .shop-item .info { flex: 1; }
+  .shop-item .info .name { font-size: 14px; font-weight: 600; }
+  .shop-item .info .price { font-size: 13px; color: var(--gold); margin-top: 4px; }
+  .shop-item .info .price.owned { color: #4caf50; }
+  .shop-item button {
+    padding: 8px 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.2s;
+  }
+  .shop-item button:hover { background: var(--accent-hover); }
+  .shop-item button.owned { background: #4caf50; }
+  .shop-item button.active-wp { background: var(--gold); color: #000; }
+
+  /* ===== АДМИНКА ===== */
+  #admin-login {
+    max-width: 320px;
+    margin: 60px auto;
+    text-align: center;
+  }
+  #admin-login h2 { margin-bottom: 16px; }
+  #admin-login input {
+    width: 100%;
+    padding: 14px;
+    background: var(--bg-input);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 15px;
+    margin-bottom: 12px;
+    outline: none;
+  }
+  #admin-login input:focus { border-color: var(--accent); }
+  #admin-login button {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #admin-error { color: #ff6b6b; margin-top: 10px; font-size: 13px; }
+
+  .admin-user {
+    background: var(--bg-sidebar);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .admin-user .info { flex: 1; }
+  .admin-user .info .name { font-size: 14px; font-weight: 600; }
+  .admin-user .info .email { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .admin-user .stars-badge {
+    background: rgba(255,193,7,0.15);
+    color: var(--gold);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .admin-user .give-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .admin-user .give-btn:hover { background: var(--accent-hover); }
+</style>
+</head>
+<body>
+
+<!-- ===== ЭКРАН ВХОДА ===== -->
+<div id="auth">
+  <div class="logo">🪐</div>
+  <h1>Orbit</h1>
+  <div class="subtitle" id="subtitle">Войди в свой аккаунт</div>
+
+  <div id="tabs">
+    <button id="tab-login" class="active" onclick="switchTab('login')">Вход</button>
+    <button id="tab-register" onclick="switchTab('register')">Регистрация</button>
+  </div>
+
+  <input class="field" id="email" type="email" placeholder="Email" autocomplete="off">
+  <input class="field" id="name-field" type="text" placeholder="Твоё имя" maxlength="20">
+  <input class="field" id="password" type="password" placeholder="Пароль">
+
+  <button id="submit-btn" onclick="submitAuth()">Войти</button>
+  <div id="error-msg"></div>
+</div>
+
+<!-- ===== ОСНОВНОЕ ПРИЛОЖЕНИЕ ===== -->
+<div id="app">
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <div class="ico">🪐</div>
+      <div>
+        <div class="title">Orbit</div>
+        <div class="sub" id="me-info">@гость</div>
+      </div>
+    </div>
+
+    <div id="nav-tabs">
+      <button class="active" data-view="chats" onclick="switchView('chats')">💬 Чаты</button>
+      <button data-view="stars" onclick="switchView('stars')">⭐ Звёзды</button>
+      <button data-view="shop" onclick="switchView('shop')">🛒 Магазин</button>
+      <button data-view="admin" onclick="switchView('admin')">👑</button>
+    </div>
+
+    <div id="search-box">
+      <input id="search" placeholder="Поиск..." oninput="renderUsers()">
+    </div>
+
+    <div id="users-title">Пользователи онлайн</div>
+    <div id="users">
+      <div class="empty">Пока никого нет 😴</div>
+    </div>
+  </div>
+
+  <div id="main">
+    <!-- ВИД: ЧАТЫ -->
+    <div class="view active" id="view-chats">
+      <div id="placeholder">
+        <div class="big">💬</div>
+        <div>Выбери, с кем хочешь поговорить</div>
+      </div>
+
+      <div id="chat-header" style="display:none;">
+        <div class="avatar" id="chat-avatar">?</div>
+        <div class="info">
+          <h2 id="chat-name">—</h2>
+          <div class="status" id="chat-status">онлайн</div>
+        </div>
+        <button id="logout-btn" onclick="logout()">Выйти</button>
+      </div>
+
+      <div id="messages" style="display:none;"></div>
+      <div id="typing" style="display:none;"></div>
+
+      <div id="input-area" style="display:none;">
+        <input id="msgInput" placeholder="Написать сообщение..." autocomplete="off">
+        <button onclick="send()">➤</button>
+      </div>
+    </div>
+
+    <!-- ВИД: ЗВЁЗДЫ -->
+    <div class="view" id="view-stars">
+      <div id="stars-view">
+        <div class="view-title">⭐ Ежедневные награды</div>
+        <div class="view-sub">Заходи каждый день и получай звёзды</div>
+
+        <div>
+          <div id="stars-counter">⭐ <span id="stars-count">0</span></div>
+          <div id="streak-counter">🔥 <span id="streak-count">0</span> дней подряд</div>
+        </div>
+
+        <div id="calendar"></div>
+
+        <button id="reward-btn" onclick="claimReward()">Получить награду за сегодня</button>
+      </div>
+    </div>
+
+    <!-- ВИД: МАГАЗИН -->
+    <div class="view" id="view-shop">
+      <div id="shop-view">
+        <div class="view-title">🛒 Магазин обоев</div>
+        <div class="view-sub">Покупай обои за звёзды</div>
+
+        <div id="shop-stars" style="margin-bottom: 16px; font-size: 15px;">
+          У тебя: ⭐ <span id="shop-stars-count">0</span>
+        </div>
+
+        <div class="shop-grid" id="shop-grid"></div>
+      </div>
+    </div>
+
+    <!-- ВИД: АДМИНКА -->
+    <div class="view" id="view-admin">
+      <div id="admin-view" style="padding: 24px; overflow-y: auto;">
+        <div id="admin-login">
+          <h2>👑 Вход в админку</h2>
+          <input id="admin-password" type="password" placeholder="Пароль администратора">
+          <button onclick="adminLogin()">Войти</button>
+          <div id="admin-error"></div>
+        </div>
+
+        <div id="admin-panel" style="display: none;">
+          <div class="view-title">👑 Админ-панель</div>
+          <div class="view-sub">Управление пользователями</div>
+          <div id="admin-users"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  let myName = '';
+  let myEmail = '';
+  let currentChat = null;
+  let usersOnline = [];
+  let lastMessages = {};
+  let myStars = 0;
+  let myStreak = 0;
+  let myWallpapers = ['default'];
+  let activeWallpaper = 'default';
+  let wallpapersList = [];
+  let isAdmin = false;
+  let allUsersCache = [];
+
+  // ===== ВКЛАДКИ ВХОДА =====
+  let mode = 'login';
+  function switchTab(newMode) {
+    mode = newMode;
+    document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+    document.getElementById('tab-register').classList.toggle('active', mode === 'register');
+    document.getElementById('name-field').style.display = mode === 'register' ? 'block' : 'none';
+    document.getElementById('submit-btn').textContent = mode === 'login' ? 'Войти' : 'Создать аккаунт';
+    document.getElementById('subtitle').textContent = mode === 'login' ? 'Войди в свой аккаунт' : 'Создай новый аккаунт';
+    document.getElementById('error-msg').textContent = '';
+  }
+
+  async function submitAuth() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const name = document.getElementById('name-field').value.trim();
+
+    document.getElementById('error-msg').textContent = '';
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Подожди...';
+
+    try {
+      const url = mode === 'login' ? '/api/login' : '/api/register';
+      const body = mode === 'login' ? { email, password } : { email, password, name };
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+
+      if (!data.ok) {
+        document.getElementById('error-msg').textContent = data.error || 'Ошибка';
+        btn.disabled = false;
+        btn.textContent = mode === 'login' ? 'Войти' : 'Создать аккаунт';
+        return;
+      }
+
+      localStorage.setItem('orbit_user', JSON.stringify({ name: data.name, email: data.email }));
+      enterChat(data.name, data.email);
+    } catch (e) {
+      document.getElementById('error-msg').textContent = 'Ошибка сети';
+      btn.disabled = false;
+      btn.textContent = mode === 'login' ? 'Войти' : 'Создать аккаунт';
+    }
+  }
+
+  ['email', 'name-field', 'password'].forEach(id => {
+    document.getElementById(id).addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') submitAuth();
+    });
+  });
+
+  window.addEventListener('load', () => {
+    const saved = localStorage.getItem('orbit_user');
+    if (saved) {
+      try {
+        const u = JSON.parse(saved);
+        enterChat(u.name, u.email);
+      } catch (e) {
+        localStorage.removeItem('orbit_user');
+      }
+    }
+  });
+
+  async function enterChat(name, email) {
+    myName = name;
+    myEmail = email;
+    socket.emit('join', { name, email });
+    document.getElementById('auth').style.display = 'none';
+    document.getElementById('app').style.display = 'grid';
+    document.getElementById('me-info').textContent = '@' + name;
+    await loadUserData();
+    await loadWallpapers();
+  }
+
+  function logout() {
+    if (!confirm('Выйти из аккаунта?')) return;
+    localStorage.removeItem('orbit_user');
+    location.reload();
+  }
+
+  // ===== ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ =====
+  async function loadUserData() {
+    try {
+      const res = await fetch('/api/user/' + encodeURIComponent(myEmail));
+      const data = await res.json();
+      if (!data.ok) return;
+      myStars = data.stars;
+      myStreak = data.streak;
+      myWallpapers = data.wallpapers;
+      activeWallpaper = data.activeWallpaper;
+      renderStars();
+      applyWallpaper();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function loadWallpapers() {
+    try {
+      const res = await fetch('/api/wallpapers');
+      const data = await res.json();
+      wallpapersList = data.wallpapers;
+      renderShop();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // ===== ПЕРЕКЛЮЧЕНИЕ ВИДОВ =====
+  function switchView(view) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+    document.querySelectorAll('#nav-tabs button').forEach(b => {
+      b.classList.toggle('active', b.dataset.view === view);
+    });
+    if (view === 'stars') renderStars();
+    if (view === 'shop') renderShop();
+    if (view === 'admin' && isAdmin) loadAdminUsers();
+  }
+
+  // ===== КАЛЕНДАРЬ И ЗВЁЗДЫ =====
+  function renderStars() {
+    document.getElementById('stars-count').textContent = myStars;
+    document.getElementById('streak-count').textContent = myStreak;
+    document.getElementById('shop-stars-count').textContent = myStars;
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const todayDate = now.getDate();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const cal = document.getElementById('calendar');
+    cal.innerHTML = '';
+
+    // Пустые клетки для выравнивания (день недели первого дня)
+    const firstDay = new Date(year, month, 1).getDay();
+    const offset = (firstDay === 0 ? 6 : firstDay - 1);
+    for (let i = 0; i < offset; i++) {
+      const d = document.createElement('div');
+      d.className = 'day';
+      cal.appendChild(d);
+    }
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = document.createElement('div');
+      d.className = 'day';
+      d.textContent = i;
+      if (i < todayDate) d.classList.add('claimed');
+      else if (i > todayDate) d.classList.add('future');
+      else d.classList.add('today');
+      cal.appendChild(d);
+    }
+
+    // Кнопка награды
+    const btn = document.getElementById('reward-btn');
+    btn.textContent = 'Получить награду за сегодня';
+    btn.disabled = false;
+  }
+
+  async function claimReward() {
+    const btn = document.getElementById('reward-btn');
+    btn.disabled = true;
+    btn.textContent = 'Получаем...';
+
+    try {
+      const res = await fetch('/api/get-reward', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: myEmail })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        btn.textContent = data.error || 'Ошибка';
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Получить награду за сегодня'; }, 2000);
+        return;
+      }
+
+      myStars = data.stars;
+      myStreak = data.streak;
+
+      // Анимация звёзд
+      showStarAnimation(data.reward);
+
+      renderStars();
+      btn.textContent = `+${data.reward} ⭐ Получено!`;
+      setTimeout(() => {
+        btn.textContent = 'Уже получил сегодня';
+        btn.disabled = true;
+      }, 2000);
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Ошибка сети';
+    }
+  }
+
+  function showStarAnimation(count) {
+    for (let i = 0; i < count; i++) {
+      const star = document.createElement('div');
+      star.textContent = '⭐';
+      star.style.position = 'fixed';
+      star.style.left = (window.innerWidth / 2) + 'px';
+      star.style.top = (window.innerHeight / 2) + 'px';
+      star.style.fontSize = '40px';
+      star.style.pointerEvents = 'none';
+      star.style.zIndex = '9999';
+      star.style.transition = 'all 1.2s ease-out';
+      document.body.appendChild(star);
+
+      setTimeout(() => {
+        star.style.transform = `translate(${(Math.random() - 0.5) * 400}px, ${-200 - Math.random() * 200}px) rotate(${Math.random() * 720}deg)`;
+        star.style.opacity = '0';
+      }, 50);
+
+      setTimeout(() => star.remove(), 1300);
+    }
+  }
+
+  // ===== МАГАЗИН =====
+  function renderShop() {
+    const grid = document.getElementById('shop-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    wallpapersList.forEach(wp => {
+      const owned = myWallpapers.includes(wp.id);
+      const isActive = activeWallpaper === wp.id;
+
+      const div = document.createElement('div');
+      div.className = 'shop-item';
+
+      let btnHtml = '';
+      if (isActive) {
+        btnHtml = '<button class="active-wp">✓ Стоит</button>';
+      } else if (owned) {
+        btnHtml = `<button class="owned" onclick="setWallpaper('${wp.id}')">Применить</button>`;
+      } else {
+        btnHtml = `<button onclick="buyWallpaper('${wp.id}')">Купить</button>`;
+      }
+
+      div.innerHTML = `
+        <div class="wp-preview">${wp.emoji}</div>
+        <div class="info">
+          <div class="name">${wp.name}</div>
+          <div class="price ${owned ? 'owned' : ''}">${owned ? 'Куплено' : wp.price + ' ⭐'}</div>
+        </div>
+        ${btnHtml}
+      `;
+      grid.appendChild(div);
+    });
+  }
+
+  async function buyWallpaper(id) {
+    try {
+      const res = await fetch('/api/buy-wallpaper', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: myEmail, wallpaperId: id })
+      });
+      const data = await res.json();
+      if (!data.ok) { alert(data.error); return; }
+      myStars = data.stars;
+      myWallpapers = data.wallpapers;
+      activeWallpaper = data.activeWallpaper;
+      renderStars();
+      renderShop();
+      applyWallpaper();
+    } catch (e) { alert('Ошибка сети'); }
+  }
+
+  async function setWallpaper(id) {
+    try {
+      const res = await fetch('/api/set-wallpaper', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: myEmail, wallpaperId: id })
+      });
+      const data = await res.json();
+      if (!data.ok) { alert(data.error); return; }
+      activeWallpaper = id;
+      renderShop();
+      applyWallpaper();
+    } catch (e) { alert('Ошибка сети'); }
+  }
+
+  function applyWallpaper() {
+    const main = document.getElementById('main');
+    if (!main) return;
+    const map = {
+      default: 'radial-gradient(circle at 15% 20%, rgba(42,171,238,0.04), transparent 40%), radial-gradient(circle at 85% 80%, rgba(34,158,217,0.04), transparent 40%)',
+      space: 'radial-gradient(circle at 30% 30%, rgba(138,43,226,0.15), transparent 50%), radial-gradient(circle at 70% 70%, rgba(75,0,130,0.2), transparent 50%)',
+      stars: 'radial-gradient(circle at 20% 40%, rgba(255,215,0,0.08), transparent 40%), radial-gradient(circle at 80% 60%, rgba(255,255,255,0.05), transparent 40%)',
+      sunset: 'linear-gradient(180deg, rgba(255,87,34,0.15), rgba(255,193,7,0.1))',
+      ocean: 'linear-gradient(180deg, rgba(0,119,182,0.15), rgba(0,180,216,0.1))',
+      forest: 'linear-gradient(180deg, rgba(34,139,34,0.15), rgba(0,100,0,0.1))',
+      fire: 'radial-gradient(circle at 50% 100%, rgba(255,69,0,0.2), transparent 60%)',
+      royal: 'linear-gradient(135deg, rgba(255,215,0,0.12), rgba(138,43,226,0.15))'
+    };
+    main.style.backgroundImage = map[activeWallpaper] || map.default;
+  }
+
+  // ===== АДМИНКА =====
+  const ADMIN_PASSWORD = 'zxcqwe123';
+
+  function adminLogin() {
+    const pass = document.getElementById('admin-password').value;
+    if (pass === ADMIN_PASSWORD) {
+      isAdmin = true;
+      document.getElementById('admin-login').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      loadAdminUsers();
+    } else {
+      document.getElementById('admin-error').textContent = 'Неверный пароль';
+    }
+  }
+
+  async function loadAdminUsers() {
+    try {
+      const res = await fetch('/api/admin/users');
+      const data = await res.json();
+      if (!data.ok) return;
+      allUsersCache = data.users;
+      renderAdminUsers();
+    } catch (e) { console.error(e); }
+  }
+
+  function renderAdminUsers() {
+    const container = document.getElementById('admin-users');
+    container.innerHTML = '';
+    allUsersCache.forEach(u => {
+      const div = document.createElement('div');
+      div.className = 'admin-user';
+      div.innerHTML = `
+        <div class="info">
+          <div class="name">${escapeHtml(u.name)}</div>
+          <div class="email">${escapeHtml(u.email)}</div>
+        </div>
+        <div class="stars-badge">⭐ ${u.stars}</div>
+        <button class="give-btn" onclick="giveStars('${u.email}', 10)">+10</button>
+        <button class="give-btn" onclick="giveStars('${u.email}', 50)">+50</button>
+        <button class="give-btn" onclick="giveStars('${u.email}', 100)">+100</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  async function giveStars(email, amount) {
+    try {
+      const res = await fetch('/api/admin/give-stars', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, amount, adminPassword: ADMIN_PASSWORD })
+      });
+      const data = await res.json();
+      if (!data.ok) { alert(data.error); return; }
+      loadAdminUsers();
+      // Если себе — обновим
+      if (email === myEmail) {
+        myStars = data.stars;
+        renderStars();
+      }
+    } catch (e) { alert('Ошибка'); }
+  }
+
+  // ===== ЧАТЫ =====
+  socket.on('users-list', (list) => {
+    usersOnline = list.filter(u => u.name !== myName);
+    renderUsers();
+  });
+
+  function renderUsers() {
+    const container = document.getElementById('users');
+    const search = (document.getElementById('search')?.value || '').toLowerCase();
+    const filtered = usersOnline.filter(u => u.name.toLowerCase().includes(search));
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty">' +
+        (search ? 'Никого не найдено 🔍' : 'Пока никого нет 😴') +
+        '</div>';
+      return;
+    }
+    container.innerHTML = '';
+    filtered.forEach(u => {
+      const div = document.createElement('div');
+      div.className = 'user' + (u.name === currentChat ? ' active' : '');
+      div.onclick = () => openChat(u.name);
+      const last = lastMessages[u.name] || 'онлайн';
+      div.innerHTML = `
+        <div class="avatar">${escapeHtml(u.name[0].toUpperCase())}</div>
+        <div class="info">
+          <div class="name">${escapeHtml(u.name)}</div>
+          <div class="last">${escapeHtml(last)}</div>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function openChat(name) {
+    switchView('chats');
+    currentChat = name;
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('chat-header').style.display = 'flex';
+    document.getElementById('messages').style.display = 'flex';
+    document.getElementById('typing').style.display = 'block';
+    document.getElementById('input-area').style.display = 'flex';
+
+    document.getElementById('chat-avatar').textContent = name[0].toUpperCase();
+    document.getElementById('chat-name').textContent = name;
+    document.getElementById('messages').innerHTML = '';
+    document.getElementById('msgInput').focus();
+
+    renderUsers();
+    socket.emit('get-history', { with: name });
+  }
+
+  socket.on('chat-history', ({ with: other, messages }) => {
+    if (other !== currentChat) return;
+    const container = document.getElementById('messages');
+    container.innerHTML = '';
+    messages.forEach(displayMessage);
+    scrollDown();
+  });
+
+  function send() {
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text || !currentChat) return;
+    socket.emit('private-message', { to: currentChat, text });
+    input.value = '';
+  }
+
+  document.getElementById('msgInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') send();
+    else if (currentChat) socket.emit('typing', { to: currentChat });
+  });
+
+  socket.on('private-message', (msg) => {
+    const other = msg.from === myName ? msg.to : msg.from;
+    lastMessages[other] = (msg.from === myName ? 'Ты: ' : '') + msg.text;
+    if (other === currentChat) {
+      displayMessage(msg);
+      scrollDown();
+    }
+    renderUsers();
+  });
+
+  let typingTimer;
+  socket.on('typing', ({ from }) => {
+    if (from !== currentChat) return;
+    const el = document.getElementById('typing');
+    el.textContent = `${from} печатает...`;
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => el.textContent = '', 1500);
+  });
+
+  function displayMessage(msg) {
+    const div = document.createElement('div');
+    const isOwn = msg.from === myName;
+    div.className = 'msg ' + (isOwn ? 'own' : 'other');
+    div.innerHTML = `
+      <div class="text">${escapeHtml(msg.text)}</div>
+      <div class="time">${msg.time}</div>
+    `;
+    document.getElementById('messages').appendChild(div);
+  }
+
+  function scrollDown() {
+    const m = document.getElementById('messages');
+    m.scrollTop = m.scrollHeight;
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+</script>
+</body>
+</html>
